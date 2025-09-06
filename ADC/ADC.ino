@@ -8,13 +8,11 @@
 void setup() {
   pinMode(A0, INPUT);
   pinMode(LED_PIN, OUTPUT);
-  Serial.begin(9600);
 }
 
 void loop() {
   int leitura = analogRead(A0);
   int leitura_map = map(leitura, ADC_BOTTOM, ADC_TOP, 0, 100);
-  Serial.println(leitura_map);
 
   if (leitura_map < FAIXA1) {
     digitalWrite(LED_PIN, LOW);
