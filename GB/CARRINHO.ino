@@ -3,29 +3,14 @@ enum carrinho_status {
   para,
   segue_linha,
   gira_esquerda,
-  gira_direita
+  gira_direita,
+  retornar,
 };
 
 enum sentido {
   esquerda,
   direita
 };
-
-/*  CÓDIGO DO PROFESSOR
-
-  #define LED_DEBUG 13
-  #define IR_CONTADOR_LINHA 3
-  #define IR_OBSTACULO 2
-  #define IR_SEGUIDOR_DIREITO 11
-  #define IR_SEGUIDOR_ESQUERDO 12
-  #define PWM_MOTOR_DIREITO 5
-  #define PWM_MOTOR_ESQUERDO 6
-  #define MOTOR_DIREITO_IN_0 8
-  #define MOTOR_DIREITO_IN_1 7
-  #define MOTOR_ESQUERDO_IN_0 10
-  #define MOTOR_ESQUERDO_IN_1 9
-
-*/
 
 //Pinos
 #define LED_DEBUG 13
@@ -126,6 +111,9 @@ void loop()
     case para:
       parar();
       break;
+    case retornar:
+      retornar();
+      break;
   }
 }
 
@@ -151,12 +139,12 @@ void seguidor_de_linha() {
   digitalWrite(MOTOR_DIREITO_IN_0, LOW);
   digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
   digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-  digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);   
+  digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);
 }
 
 void faz_curva(enum sentido curva_sentido){
   if(curva_sentido == esquerda){
-    Serial.print("Fazendo curva esquerda\n");  
+    Serial.print("Fazendo curva esquerda\n");
     
     digitalWrite(MOTOR_DIREITO_IN_0, LOW);
     digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
@@ -164,15 +152,10 @@ void faz_curva(enum sentido curva_sentido){
     digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
 
     delay(1000);
-
-    digitalWrite(MOTOR_DIREITO_IN_0, LOW);
-    digitalWrite(MOTOR_DIREITO_IN_1, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
-  
-    Serial.print("Fez curva, passo segue_linha\n");  
+ 
+    Serial.print("Fez curva, passo segue_linha\n");
   }else{
-    Serial.print("Fazendo curva direita\n");  
+    Serial.print("Fazendo curva direita\n");
       
     digitalWrite(MOTOR_DIREITO_IN_0, HIGH);
     digitalWrite(MOTOR_DIREITO_IN_1, LOW);
@@ -181,18 +164,16 @@ void faz_curva(enum sentido curva_sentido){
 
     delay(1000);
 
-    digitalWrite(MOTOR_DIREITO_IN_0, LOW);
-    digitalWrite(MOTOR_DIREITO_IN_1, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
-  
-    Serial.print("Fez curva, passo segue_linha\n");  
+    Serial.print("Fez curva, passo segue_linha\n");
   }
+
+  parar();
+
   carrinho_passo = segue_linha;
 }
 
 void parar(){
-  Serial.print("Parando\n");  
+  Serial.print("Parando\n");
   
   analogWrite(PWM_MOTOR_DIREITO, 0);
   analogWrite(PWM_MOTOR_ESQUERDO, 0);
@@ -203,18 +184,29 @@ void parar(){
   digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
 }
 
+void retornar() {
+  // faz_curva(esquerda);
+  // segue_linha_tile(1);
+  // faz_curva(direita);
+  // segue_linha_tile(1);
+  // faz_curva(direita);
+  // segue_linha_tile(1);
+  // faz_curva(esquerda);
+  carrinho_passo = segue_linha;
+}
+
 int contContadorLinha = 0;
-void contador_linha(){  
+void contador_linha(){
   if(!contContadorLinha){
     contContadorLinha++;
     
     sprintf(buffer, "Contou linha, iCount: %d\n", iCount);
     Serial.print(buffer);
     
-    iCount++;  
+    iCount++;
     if (iCount == 3) {
       sprintf(buffer, "Passo gira, iCount: %d\n", iCount);
-      Serial.print(buffer);    
+      Serial.print(buffer);
       carrinho_passo = gira_direita;
       iCount = 0;
     }
@@ -224,21 +216,21 @@ void contador_linha(){
 }
 
 int contObstaculo = 0;
-void obstaculo(){    
-  if(!contObstaculo){ 
-    contObstaculo++;   
+void obstaculo(){
+  if(!contObstaculo){
+    contObstaculo++;
     isObstaculo = ! isObstaculo;
     
     sprintf(buffer, "encontrou obstaculo, isObstaculo depois de inverter: %d\n", isObstaculo);
-    Serial.print(buffer);      
-  
+    Serial.print(buffer);
+
     if (isObstaculo){
       Serial.print("Passo parado\n");
       carrinho_passo = para;
     }else{
       Serial.print("Passo segue_linha\n");
       carrinho_passo = segue_linha;
-    }   
+    }
   }else{
     contObstaculo = 0;
   }
