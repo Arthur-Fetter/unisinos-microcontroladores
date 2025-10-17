@@ -146,6 +146,18 @@ void faz_curva(enum sentido curva_sentido){
   if(curva_sentido == esquerda){
     Serial.print("Fazendo curva esquerda\n");
     
+    // Comando de curva deve estar demarcado por uma lógica para realizar a curva
+    // int linha_lateral = false;
+    // int linha_frontal = false;
+    // while (!(linha_lateral && linha_frontal)) {
+    //    if (digialRead(IR_CONTADOR_LINHA)) {
+    //      linha_lateral = true;
+    //    }
+    //    if (digitalRead(IR_SEGUIDOR_DREITO)) {
+    //      linha_frontal = true;
+    //    }
+    //    digitalWires
+    // }
     digitalWrite(MOTOR_DIREITO_IN_0, LOW);
     digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
     digitalWrite(MOTOR_ESQUERDO_IN_0, HIGH);
