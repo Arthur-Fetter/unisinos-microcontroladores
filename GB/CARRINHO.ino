@@ -4,7 +4,7 @@ enum carrinho_status {
   segue_linha,
   gira_esquerda,
   gira_direita,
-  retornar,
+  retorna,
 };
 
 enum sentido {
@@ -46,21 +46,25 @@ void setup()
   pinMode(MOTOR_DIREITO_IN_1, OUTPUT);
   pinMode(MOTOR_ESQUERDO_IN_0, OUTPUT);
   pinMode(MOTOR_ESQUERDO_IN_1, OUTPUT);
-  attachInterrupt(digitalPinToInterrupt(IR_OBSTACULO), obstaculo, CHANGE);  
+  //attachInterrupt(digitalPinToInterrupt(IR_OBSTACULO), obstaculo, CHANGE);  
   //attachInterrupt(digitalPinToInterrupt(IR_CONTADOR_LINHA), contador_linha, RISING);
+
+  analogWrite(PWM_MOTOR_ESQUERDO, 200);
+  analogWrite(PWM_MOTOR_DIREITO, 200);
 
   Serial.begin(9600);
 }
 
 void loop()
-{    
-  
+{      
   buffer[0] = digitalRead(LED_DEBUG) ? 'L' : ' ';  
   buffer[1] = digitalRead(IR_OBSTACULO) ? 'O' : ' ';
   buffer[2] = digitalRead(IR_SEGUIDOR_DIREITO) ? 'D' : ' ';
   buffer[3] = digitalRead(IR_SEGUIDOR_ESQUERDO) ? 'E' : ' ';
-  buffer[4] = digitalRead(PWM_MOTOR_DIREITO) ? 'P' : ' ';
-  buffer[5] = digitalRead(PWM_MOTOR_ESQUERDO) ? 'Q' : ' ';
+  buffer[4] = ' ';
+  buffer[5] =' ';
+  //buffer[4] = digitalRead(PWM_MOTOR_DIREITO) ? 'P' : ' ';
+  //buffer[5] = digitalRead(PWM_MOTOR_ESQUERDO) ? 'Q' : ' ';
   buffer[6] = digitalRead(MOTOR_ESQUERDO_IN_0) ? '1' : ' ';
   buffer[7] = digitalRead(MOTOR_ESQUERDO_IN_1) ? '2' : ' ';
   buffer[8] = digitalRead(MOTOR_DIREITO_IN_0) ? '3' : ' ';
@@ -111,7 +115,7 @@ void loop()
     case para:
       parar();
       break;
-    case retornar:
+    case retorna:
       retornar();
       break;
   }
@@ -120,26 +124,28 @@ void loop()
 void seguidor_de_linha() {
   Serial.print("Seguindo linha\n"); 
 
-  /*if(digitalRead(IR_SEGUIDOR_DIREITO)){
+  if(digitalRead(IR_SEGUIDOR_ESQUERDO) && digitalRead(IR_SEGUIDOR_DIREITO)){
+    Serial.print("encontrou linha ortogonal com o sensor posterior\n"); 
+  }else if(digitalRead(IR_SEGUIDOR_DIREITO)){
     Serial.print("alinhando para a esquerda\n"); 
-    digitalWrite(MOTOR_DIREITO_IN_0, HIGH);
-    digitalWrite(MOTOR_DIREITO_IN_1, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);
-    delay(100);
-  }else if(digitalRead(IR_SEGUIDOR_ESQUERDO)){ 
-    Serial.print("alinhando para a direita\n"); 
     digitalWrite(MOTOR_DIREITO_IN_0, LOW);
     digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
     digitalWrite(MOTOR_ESQUERDO_IN_0, HIGH);
     digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
-    delay(100);
-  }*/
-  
-  digitalWrite(MOTOR_DIREITO_IN_0, LOW);
-  digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
-  digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-  digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);
+    delay(20);
+  }else if(digitalRead(IR_SEGUIDOR_ESQUERDO)){ 
+    Serial.print("alinhando para a direita\n"); 
+    digitalWrite(MOTOR_DIREITO_IN_0, HIGH);
+    digitalWrite(MOTOR_DIREITO_IN_1, LOW);
+    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
+    digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);
+    delay(20);
+  }else{  
+    digitalWrite(MOTOR_DIREITO_IN_0, LOW);
+    digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
+    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
+    digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);
+  }
 }
 
 void faz_curva(enum sentido curva_sentido){
@@ -187,9 +193,6 @@ void faz_curva(enum sentido curva_sentido){
 void parar(){
   Serial.print("Parando\n");
   
-  analogWrite(PWM_MOTOR_DIREITO, 0);
-  analogWrite(PWM_MOTOR_ESQUERDO, 0);
-
   digitalWrite(MOTOR_DIREITO_IN_0, LOW);
   digitalWrite(MOTOR_DIREITO_IN_1, LOW);
   digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
@@ -197,6 +200,7 @@ void parar(){
 }
 
 void retornar() {
+  // fazer um tempo mínimo para girar mais que 90 graus, depois girar até achar a linha no sensor (não é feito da segunda forma direto para evitar ler a linha à 90 graus no sensor, se houver)
   // faz_curva(esquerda);
   // segue_linha_tile(1);
   // faz_curva(direita);
