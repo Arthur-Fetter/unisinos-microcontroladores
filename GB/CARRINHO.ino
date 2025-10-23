@@ -9,23 +9,26 @@ enum carrinho_status {
 
 enum sentido {
   esquerda,
-  direita
+  direita,
+  frente,
+  tras
 };
 
 //Pinos
 #define LED_DEBUG 13
-#define IR_CONTADOR_LINHA 3
+#define IR_CONTADOR_LINHA 5
 #define IR_OBSTACULO 2
 #define IR_SEGUIDOR_DIREITO 11
 #define IR_SEGUIDOR_ESQUERDO 12
-#define PWM_MOTOR_DIREITO 5
-#define PWM_MOTOR_ESQUERDO 6
+#define PWM_MOTOR_DIREITO 3                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+#define PWM_MOTOR_ESQUERDO 6                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 #define MOTOR_DIREITO_IN_0 8
 #define MOTOR_DIREITO_IN_1 7
 #define MOTOR_ESQUERDO_IN_0 10
 #define MOTOR_ESQUERDO_IN_1 9
 
 //Variaveis globais
+//enum carrinho_status carrinho_passo = para;
 enum carrinho_status carrinho_passo = segue_linha;
 int iCount = 0;
 int isObstaculo = 0;
@@ -47,11 +50,11 @@ void setup()
   pinMode(MOTOR_ESQUERDO_IN_0, OUTPUT);
   pinMode(MOTOR_ESQUERDO_IN_1, OUTPUT);
   //attachInterrupt(digitalPinToInterrupt(IR_OBSTACULO), obstaculo, CHANGE);  
-  //attachInterrupt(digitalPinToInterrupt(IR_CONTADOR_LINHA), contador_linha, RISING);
+  attachInterrupt(digitalPinToInterrupt(IR_CONTADOR_LINHA), contador_linha, CHANGE);
 
-  analogWrite(PWM_MOTOR_ESQUERDO, 200);
-  analogWrite(PWM_MOTOR_DIREITO, 200);
-
+  analogWrite(PWM_MOTOR_ESQUERDO, 100);
+  analogWrite(PWM_MOTOR_DIREITO, 100);
+  
   Serial.begin(9600);
 }
 
@@ -61,16 +64,17 @@ void loop()
   buffer[1] = digitalRead(IR_OBSTACULO) ? 'O' : ' ';
   buffer[2] = digitalRead(IR_SEGUIDOR_DIREITO) ? 'D' : ' ';
   buffer[3] = digitalRead(IR_SEGUIDOR_ESQUERDO) ? 'E' : ' ';
-  buffer[4] = ' ';
-  buffer[5] =' ';
-  //buffer[4] = digitalRead(PWM_MOTOR_DIREITO) ? 'P' : ' ';
-  //buffer[5] = digitalRead(PWM_MOTOR_ESQUERDO) ? 'Q' : ' ';
-  buffer[6] = digitalRead(MOTOR_ESQUERDO_IN_0) ? '1' : ' ';
-  buffer[7] = digitalRead(MOTOR_ESQUERDO_IN_1) ? '2' : ' ';
-  buffer[8] = digitalRead(MOTOR_DIREITO_IN_0) ? '3' : ' ';
-  buffer[9] = digitalRead(MOTOR_DIREITO_IN_1) ? '4' : ' ';
-  buffer[10] = '|',
-  buffer[11] = '\0';
+  buffer[4] = digitalRead(IR_CONTADOR_LINHA) ? 'C' : ' ';
+  buffer[5] = ' ';
+  buffer[6] =' ';
+  //buffer[5] = digitalRead(PWM_MOTOR_DIREITO) ? 'P' : ' ';
+  //buffer[6] = digitalRead(PWM_MOTOR_ESQUERDO) ? 'Q' : ' ';
+  buffer[7] = digitalRead(MOTOR_ESQUERDO_IN_0) ? '1' : ' ';
+  buffer[8] = digitalRead(MOTOR_ESQUERDO_IN_1) ? '2' : ' ';
+  buffer[9] = digitalRead(MOTOR_DIREITO_IN_0) ? '3' : ' ';
+  buffer[10] = digitalRead(MOTOR_DIREITO_IN_1) ? '4' : ' ';
+  buffer[11] = '|',
+  buffer[12] = '\0';
   
   Serial.print(buffer);
   
@@ -81,6 +85,7 @@ void loop()
    * p -> para
    * c -> contador de linha
    * o -> contador de linha
+   * r -> retorna
    */
   if(Serial.available()){
     command = Serial.read();   
@@ -98,6 +103,8 @@ void loop()
       contador_linha();
     }else if(command == 'o'){
       obstaculo();
+    }else if(command == 'r'){
+      carrinho_passo = retorna;
     }
   }
   
@@ -121,30 +128,66 @@ void loop()
   }
 }
 
+void gira_motor_esquerdo(enum sentido sentido_motor){
+  if(sentido_motor == frente){ 
+    analogWrite(PWM_MOTOR_ESQUERDO, 250);    
+    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
+    digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);        
+    delay(30);
+    analogWrite(PWM_MOTOR_ESQUERDO, 120);    
+  }else if(sentido_motor == tras){    
+    analogWrite(PWM_MOTOR_ESQUERDO, 250);    
+    digitalWrite(MOTOR_ESQUERDO_IN_0, HIGH);
+    digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);    
+    delay(30);
+    analogWrite(PWM_MOTOR_ESQUERDO, 120);    
+  }else{    
+    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
+    digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
+  }
+}
+
+void gira_motor_direito(enum sentido sentido_motor){
+  if(sentido_motor == frente){ 
+    analogWrite(PWM_MOTOR_DIREITO, 250);    
+    digitalWrite(MOTOR_DIREITO_IN_0, LOW);
+    digitalWrite(MOTOR_DIREITO_IN_1, HIGH);        
+    delay(30);
+    analogWrite(PWM_MOTOR_DIREITO, 120);    
+  }else if(sentido_motor == tras){    
+    analogWrite(PWM_MOTOR_DIREITO, 250);   
+    digitalWrite(MOTOR_DIREITO_IN_0, HIGH);
+    digitalWrite(MOTOR_DIREITO_IN_1, LOW);
+    delay(30);
+    analogWrite(PWM_MOTOR_DIREITO, 120);    
+  }else{    
+    digitalWrite(MOTOR_DIREITO_IN_0, LOW);
+    digitalWrite(MOTOR_DIREITO_IN_1, LOW);
+  }
+}
+
 void seguidor_de_linha() {
   Serial.print("Seguindo linha\n"); 
 
   if(digitalRead(IR_SEGUIDOR_ESQUERDO) && digitalRead(IR_SEGUIDOR_DIREITO)){
-    Serial.print("encontrou linha ortogonal com o sensor posterior\n"); 
+    Serial.print("encontrou linha ortogonal com o sensor posterior\n");     
+    gira_motor_esquerdo(frente);
+    gira_motor_direito(frente);
+    delay(50);
   }else if(digitalRead(IR_SEGUIDOR_DIREITO)){
-    Serial.print("alinhando para a esquerda\n"); 
-    digitalWrite(MOTOR_DIREITO_IN_0, LOW);
-    digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
-    digitalWrite(MOTOR_ESQUERDO_IN_0, HIGH);
-    digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
-    delay(20);
+    Serial.print("alinhando para a direita\n");
+    
+    gira_motor_esquerdo(frente);
+    gira_motor_direito(tras);
+    delay(10);
   }else if(digitalRead(IR_SEGUIDOR_ESQUERDO)){ 
-    Serial.print("alinhando para a direita\n"); 
-    digitalWrite(MOTOR_DIREITO_IN_0, HIGH);
-    digitalWrite(MOTOR_DIREITO_IN_1, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);
-    delay(20);
-  }else{  
-    digitalWrite(MOTOR_DIREITO_IN_0, LOW);
-    digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
-    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);
+    Serial.print("alinhando para a esquerda\n");  
+    gira_motor_esquerdo(tras);
+    gira_motor_direito(frente);
+    delay(10);
+  }else{     
+    gira_motor_esquerdo(frente);
+    gira_motor_direito(frente);
   }
 }
 
@@ -164,39 +207,34 @@ void faz_curva(enum sentido curva_sentido){
     //    }
     //    digitalWires
     // }
-    digitalWrite(MOTOR_DIREITO_IN_0, LOW);
-    digitalWrite(MOTOR_DIREITO_IN_1, HIGH);
-    digitalWrite(MOTOR_ESQUERDO_IN_0, HIGH);
-    digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
+    gira_motor_esquerdo(tras);
+    gira_motor_direito(frente);
 
-    delay(1000);
+    delay(600);
  
     Serial.print("Fez curva, passo segue_linha\n");
   }else{
     Serial.print("Fazendo curva direita\n");
-      
-    digitalWrite(MOTOR_DIREITO_IN_0, HIGH);
-    digitalWrite(MOTOR_DIREITO_IN_1, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-    digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);
+          
+    gira_motor_esquerdo(frente);
+    gira_motor_direito(tras);
 
-    delay(1000);
+    delay(600);
 
     Serial.print("Fez curva, passo segue_linha\n");
   }
 
-  parar();
+  carrinho_passo = para;
 
-  carrinho_passo = segue_linha;
+  parar();  
+  //carrinho_passo = segue_linha;
 }
 
 void parar(){
   Serial.print("Parando\n");
-  
-  digitalWrite(MOTOR_DIREITO_IN_0, LOW);
-  digitalWrite(MOTOR_DIREITO_IN_1, LOW);
-  digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
-  digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);
+    
+  gira_motor_esquerdo(0);
+  gira_motor_direito(0);
 }
 
 void retornar() {
@@ -223,7 +261,7 @@ void contador_linha(){
     if (iCount == 3) {
       sprintf(buffer, "Passo gira, iCount: %d\n", iCount);
       Serial.print(buffer);
-      carrinho_passo = gira_direita;
+      carrinho_passo = gira_esquerda;
       iCount = 0;
     }
   }else{
