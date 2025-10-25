@@ -16,15 +16,15 @@ enum sentido {
 
 //Pinos
 #define LED_DEBUG 13
-#define IR_CONTADOR_LINHA 5
+#define IR_CONTADOR_LINHA 3
 #define IR_OBSTACULO 2
 #define IR_SEGUIDOR_DIREITO 11
 #define IR_SEGUIDOR_ESQUERDO 12
-#define PWM_MOTOR_DIREITO 3                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-#define PWM_MOTOR_ESQUERDO 6                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+#define PWM_MOTOR_DIREITO 10
+#define PWM_MOTOR_ESQUERDO 6
 #define MOTOR_DIREITO_IN_0 8
 #define MOTOR_DIREITO_IN_1 7
-#define MOTOR_ESQUERDO_IN_0 10
+#define MOTOR_ESQUERDO_IN_0 13
 #define MOTOR_ESQUERDO_IN_1 9
 
 //Variaveis globais
@@ -37,6 +37,8 @@ char buffer[80]; //variável utilizada para printar no serial
 
 void setup()
 {
+  Serial.begin(9600);
+
   //Configuração dos pinos
   pinMode(LED_DEBUG, OUTPUT);
   pinMode(IR_CONTADOR_LINHA, INPUT);
@@ -49,13 +51,11 @@ void setup()
   pinMode(MOTOR_DIREITO_IN_1, OUTPUT);
   pinMode(MOTOR_ESQUERDO_IN_0, OUTPUT);
   pinMode(MOTOR_ESQUERDO_IN_1, OUTPUT);
-  //attachInterrupt(digitalPinToInterrupt(IR_OBSTACULO), obstaculo, CHANGE);  
+  // attachInterrupt(digitalPinToInterrupt(IR_OBSTACULO), obstaculo, CHANGE);  
   attachInterrupt(digitalPinToInterrupt(IR_CONTADOR_LINHA), contador_linha, CHANGE);
 
-  analogWrite(PWM_MOTOR_ESQUERDO, 100);
+  analogWrite(PWM_MOTOR_ESQUERDO, 95);
   analogWrite(PWM_MOTOR_DIREITO, 100);
-  
-  Serial.begin(9600);
 }
 
 void loop()
@@ -76,7 +76,7 @@ void loop()
   buffer[11] = '|',
   buffer[12] = '\0';
   
-  Serial.print(buffer);
+  // Serial.print(buffer);
   
   /*
    * s -> segue_linha
@@ -167,7 +167,7 @@ void gira_motor_direito(enum sentido sentido_motor){
 }
 
 void seguidor_de_linha() {
-  Serial.print("Seguindo linha\n"); 
+  // Serial.print("Seguindo linha\n"); 
 
   if(digitalRead(IR_SEGUIDOR_ESQUERDO) && digitalRead(IR_SEGUIDOR_DIREITO)){
     Serial.print("encontrou linha ortogonal com o sensor posterior\n");     
@@ -250,8 +250,9 @@ void retornar() {
 }
 
 int contContadorLinha = 0;
-void contador_linha(){
-  if(!contContadorLinha){
+void contador_linha() {
+  Serial.print("ENCONTROU LINHA!!!!!!");
+  if(digitalRead(IR_CONTADOR_LINHA)){
     contContadorLinha++;
     
     sprintf(buffer, "Contou linha, iCount: %d\n", iCount);
@@ -264,13 +265,14 @@ void contador_linha(){
       carrinho_passo = gira_esquerda;
       iCount = 0;
     }
-  }else{
+  } else {
     contContadorLinha = 0;
   }
+  delay(100);
 }
 
 int contObstaculo = 0;
-void obstaculo(){
+void obstaculo() {
   if(!contObstaculo){
     contObstaculo++;
     isObstaculo = ! isObstaculo;
