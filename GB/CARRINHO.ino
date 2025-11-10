@@ -53,8 +53,8 @@ void setup()
   pinMode(MOTOR_DIREITO_IN_1, OUTPUT);
   pinMode(MOTOR_ESQUERDO_IN_0, OUTPUT);
   pinMode(MOTOR_ESQUERDO_IN_1, OUTPUT);
-  // attachInterrupt(digitalPinToInterrupt(IR_OBSTACULO), obstaculo, CHANGE);  
-  attachInterrupt(digitalPinToInterrupt(IR_CONTADOR_LINHA), contador_linha, RISING);
+  attachInterrupt(digitalPinToInterrupt(IR_OBSTACULO), obstaculo, CHANGE);  
+  attachInterrupt(digitalPinToInterrupt(IR_CONTADOR_LINHA), contador_linha, FALLING);
 }
 
 void loop()
@@ -127,13 +127,13 @@ void loop()
 
 void gira_motor_esquerdo(enum sentido sentido_motor){
   if(sentido_motor == frente){ 
-    analogWrite(PWM_MOTOR_ESQUERDO, 250);    
+    analogWrite(PWM_MOTOR_ESQUERDO, 200);    
     digitalWrite(MOTOR_ESQUERDO_IN_0, LOW);
     digitalWrite(MOTOR_ESQUERDO_IN_1, HIGH);        
     delay(30);
     analogWrite(PWM_MOTOR_ESQUERDO, 95);    
   }else if(sentido_motor == tras){    
-    analogWrite(PWM_MOTOR_ESQUERDO, 250);    
+    analogWrite(PWM_MOTOR_ESQUERDO, 200);    
     digitalWrite(MOTOR_ESQUERDO_IN_0, HIGH);
     digitalWrite(MOTOR_ESQUERDO_IN_1, LOW);    
     delay(30);
@@ -146,17 +146,17 @@ void gira_motor_esquerdo(enum sentido sentido_motor){
 
 void gira_motor_direito(enum sentido sentido_motor){
   if(sentido_motor == frente){ 
-    analogWrite(PWM_MOTOR_DIREITO, 250);    
+    analogWrite(PWM_MOTOR_DIREITO, 200);    
     digitalWrite(MOTOR_DIREITO_IN_0, LOW);
     digitalWrite(MOTOR_DIREITO_IN_1, HIGH);        
     delay(30);
-    analogWrite(PWM_MOTOR_DIREITO, 250);    
+    analogWrite(PWM_MOTOR_DIREITO, 200);    
   }else if(sentido_motor == tras){    
-    analogWrite(PWM_MOTOR_DIREITO, 250);   
+    analogWrite(PWM_MOTOR_DIREITO, 200);   
     digitalWrite(MOTOR_DIREITO_IN_0, HIGH);
     digitalWrite(MOTOR_DIREITO_IN_1, LOW);
     delay(30);
-    analogWrite(PWM_MOTOR_DIREITO, 250);    
+    analogWrite(PWM_MOTOR_DIREITO, 200);    
   }else{    
     digitalWrite(MOTOR_DIREITO_IN_0, LOW);
     digitalWrite(MOTOR_DIREITO_IN_1, LOW);
@@ -238,7 +238,7 @@ void retornar() {
 }
 
 unsigned long ultimo_interrupt_cnt = millis();
-unsigned long delay_cnt = 500;
+unsigned long delay_cnt = 750;
 void contador_linha() {
   sprintf(buffer, "Rodou interrupt conta linha, millis: %lu , tempo para voltar: %lu \n", millis(), ultimo_interrupt_cnt + delay_cnt);
   Serial.print(buffer);
@@ -260,15 +260,24 @@ void contador_linha() {
   }
 }
 
+unsigned long ultimo_interrupt_cnt2 = millis();
+unsigned long delay_cnt2 = 100;
 int contObstaculo = 0;
 void obstaculo() {
-  if(!contObstaculo){
-    contObstaculo++;
-    isObstaculo = ! isObstaculo;
+  if((millis() > ultimo_interrupt_cnt2 + delay_cnt2)){            
+    if(!isObstaculo){                        
+      Serial.print(buffer);          
+      
+      parar();
+      carrinho_passo = para;
+    }else{        
+      carrinho_passo = segue_linha;      
+    }
+    
+    isObstaculo = !isObstaculo;
     
     sprintf(buffer, "encontrou obstaculo, isObstaculo depois de inverter: %d\n", isObstaculo);
-    Serial.print(buffer);    
-  }else{        
-    contObstaculo = 0;    
+    
+    ultimo_interrupt_cnt2 = millis();
   }
 }
