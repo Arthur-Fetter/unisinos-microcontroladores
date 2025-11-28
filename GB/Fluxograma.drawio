@@ -92,7 +92,7 @@
         </mxCell>
         <mxCell id="eUfT9PUffSEm3wiL0WkW-37" connectable="0" parent="eUfT9PUffSEm3wiL0WkW-36" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Não" vertex="1">
           <mxGeometry relative="1" x="-0.7198" as="geometry">
-            <mxPoint as="offset" />
+            <mxPoint x="13" y="-5" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="eUfT9PUffSEm3wiL0WkW-38" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Fim" vertex="1">
@@ -529,6 +529,11 @@
         <mxCell id="__6UHXivpMfATA1KQ_xN-10" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Não" vertex="1">
           <mxGeometry x="290" y="910" as="geometry">
             <mxPoint x="491" y="40" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eHwjZPFP7Ed-CaueYYrs-1" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Sim" vertex="1">
+          <mxGeometry x="195" y="540" as="geometry">
+            <mxPoint x="-18" y="-97" as="offset" />
           </mxGeometry>
         </mxCell>
       </root>
